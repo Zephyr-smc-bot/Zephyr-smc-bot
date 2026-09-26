@@ -252,3 +252,4 @@ async def chart_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == "__main__":
     threading.Thread(target=run_server, daemon=True).start()
     main()
+# cache refresh
