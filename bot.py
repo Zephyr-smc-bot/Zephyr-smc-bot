@@ -1,4 +1,6 @@
 import asyncio
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import datetime
 import pandas as pd
 from telegram import Update
@@ -214,5 +216,16 @@ def main():
     print("Rozay SMC Strategy Bot is running...")
     app.run_polling()
 
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+
+def run_server():
+    server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
+    server.serve_forever()
+
 if __name__ == "__main__":
+    threading.Thread(target=run_server, daemon=True).start()
     main()
