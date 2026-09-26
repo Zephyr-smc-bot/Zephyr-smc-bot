@@ -15,7 +15,37 @@ td = TDClient(apikey=TWELVE_KEY)
 
 WATCHLIST = ["GBP/USD", "USD/JPY", "XAU/USD", "BTC/USD"]
 CHAT_IDS = set()
+def check_rozay_liquidity_strategy(df):
+    """
+    Scans the latest candles for Rozay's LQ + Candleforms setup:
+    1. Liquidity sweep of a recent swing high/low.
+    2. Reaction candle form (engulfing or strong rejection).
+    """
+    if len(df) < 15:
+        return "Not enough data for structure analysis."
 
+    recent_high = df['high'].iloc[-15:-2].max()
+    recent_low = df['low'].iloc[-15:-2].min()
+
+    curr_open = df['open'].iloc[-1]
+    curr_close = df['close'].iloc[-1]
+    curr_high = df['high'].iloc[-1]
+    curr_low = df['low'].iloc[-1]
+
+    signal_found = False
+    setup_type = None
+
+    if curr_high > recent_high and curr_close < curr_open:
+        signal_found = True
+        setup_type = "📉 Rozay Bearish Setup: High Swept + Rejection/Engulfing at LQ!"
+    elif curr_low < recent_low and curr_close > curr_open:
+        signal_found = True
+        setup_type = "📈 Rozay Bullish Setup: Low Swept + Rejection/Engulfing at LQ!"
+
+    if signal_found:
+        return f"🚨 SMC ALERT TRIGGERED!\n{setup_type}\n- Level Swept: {recent_high if 'Bearish' in setup_type else recent_low}"
+    else:
+        return "🔍 Market scanning... No clear LQ sweep or candle confirmation yet."
 def is_market_open(symbol: str = "") -> bool:
     if "BTC" in symbol or "ETH" in symbol:
         return True
@@ -205,7 +235,10 @@ async def background_scanner(app: Application):
 
 async def post_init(app: Application):
     asyncio.create_task(background_scanner(app))
-
+async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    df = fetch_data(symbol="BTC/USD", interval="1h", outputsize=30)
+    result_message = check_rozay_liquidity_strategy(df)
+    await update.message.reply_text(result_message)
 def main():
     app = Application.builder().token(TOKEN).post_init(post_init).build()
 
@@ -214,6 +247,7 @@ def main():
     app.add_handler(CommandHandler("scan", scan))
     app.add_handler(CommandHandler("price", price))
     app.add_handler(CommandHandler("chart", chart_command))
+    app.add_handler(CommandHandler("signal", signal_command))
     print("Rozay SMC Strategy Bot is running...")
     app.run_polling()
 
