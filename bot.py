@@ -1,3 +1,4 @@
+import mplfinance as mpf
 import os
 import asyncio
 import threading
@@ -225,15 +226,12 @@ class SimpleHandler(BaseHTTPRequestHandler):
 def run_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
     server.serve_forever()
-import mplfinance as mpf
 
 async def chart_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Fetching market data and drawing chart...")
     try:
         ts = td.time_series(symbol="BTC/USD", interval="1day", outputsize=30)
         df = ts.as_pandas()
-        
-       import mplfinance as mpf
 
 # Inside your chart command function, after fetching your DataFrame (df):
 # Ensure columns are formatted correctly for mplfinance (Open, High, Low, Close)
