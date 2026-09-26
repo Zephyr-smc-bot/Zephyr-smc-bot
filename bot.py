@@ -233,26 +233,23 @@ async def chart_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ts = td.time_series(symbol="BTC/USD", interval="1day", outputsize=30)
         df = ts.as_pandas()
 
-# Inside your chart command function, after fetching your DataFrame (df):
-# Ensure columns are formatted correctly for mplfinance (Open, High, Low, Close)
-df = df[['open', 'high', 'low', 'close']].astype(float)
-df.columns = ['Open', 'High', 'Low', 'Close']
+        df = df[['open', 'high', 'low', 'close']].astype(float)
+        df.columns = ['Open', 'High', 'Low', 'Close']
 
-chart_path = 'btc_chart.png'
+        chart_path = 'btc_chart.png'
 
-# Professional dark theme matching your trading setup
-mc = mpf.make_marketcolors(up='green', down='red', wick='inherit', edge='inherit')
-s = mpf.make_mpf_style(base_mpl_style='dark_background', marketcolors=mc)
+        mc = mpf.make_marketcolors(up='green', down='red', wick='inherit', edge='inherit')
+        s = mpf.make_mpf_style(base_mpl_style='dark_background', marketcolors=mc)
 
-# Generate and save the candlestick chart
-mpf.plot(
-    df, 
-    type='candle', 
-    style=s, 
-    title='Zephyr SMC - Live Market Chart (BTC/USD)', 
-    ylabel='Price (USD)', 
-    savefig=chart_path
-)
+        mpf.plot(
+            df,
+            type='candle',
+            style=s,
+            title='Zephyr SMC - Live Market Chart (BTC/USD)',
+            ylabel='Price (USD)',
+            savefig=chart_path
+        )
+
         with open(chart_path, 'rb') as photo:
             await update.message.reply_photo(photo=photo, caption="Here is your live market chart!")
             
