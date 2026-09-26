@@ -1,3 +1,4 @@
+import os
 import asyncio
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -8,8 +9,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from twelvedata import TDClient
 
 TOKEN = "8908283357:AAE8d5eD7tGcgoHw32qntEV_2wsm5-YlZTs"
-TWELVE_KEY = "500b3d04d50a43eb9220fc3351004653"
-
+TWELVE_KEY = os.getenv("TWELVE_DATA_API_KEY")
 td = TDClient(apikey=TWELVE_KEY)
 
 WATCHLIST = ["GBP/USD", "USD/JPY", "XAU/USD", "BTC/USD"]
@@ -212,7 +212,7 @@ def main():
     app.add_handler(CommandHandler("ping", ping))
     app.add_handler(CommandHandler("scan", scan))
     app.add_handler(CommandHandler("price", price))
-
+    app.add_handler(CommandHandler("chart", chart_command))
     print("Rozay SMC Strategy Bot is running...")
     app.run_polling()
 
@@ -225,7 +225,30 @@ class SimpleHandler(BaseHTTPRequestHandler):
 def run_server():
     server = HTTPServer(('0.0.0.0', 10000), SimpleHandler)
     server.serve_forever()
+import matplotlib.pyplot as plt
 
+async def chart_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Fetching market data and drawing chart...")
+    try:
+        ts = td.time_series(symbol="BTC/USD", interval="1day", outputsize=30)
+        df = ts.as_pandas()
+        
+        plt.figure(figsize=(10, 5))
+        plt.plot(df.index, df['close'], label='BTC/USD Close', color='#00ffcc', linewidth=2)
+        plt.title('Zephyr SMC - Live Market Chart (BTC/USD)')
+        plt.xlabel('Date')
+        plt.ylabel('Price (USD)')
+        plt.legend()
+        plt.grid(True, linestyle='--', alpha=0.5)
+        
+        chart_path = 'btc_chart.png'
+        plt.savefig(chart_path, bbox_inches='tight')
+        plt.close()
+        
+        with open(chart_path, 'rb') as photo:
+            await update.message.reply_photo(photo=photo, caption="Here is your live market chart!")
+    except Exception as e:
+        await update.message.reply_text(f"Could not generate chart: {str(e)}")
 if __name__ == "__main__":
     threading.Thread(target=run_server, daemon=True).start()
     main()
