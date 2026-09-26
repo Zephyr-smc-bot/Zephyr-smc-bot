@@ -255,7 +255,8 @@ mpf.plot(
 )
         with open(chart_path, 'rb') as photo:
             await update.message.reply_photo(photo=photo, caption="Here is your live market chart!")
-       except Exception as e: 
+            
+    except Exception as e:
         await update.message.reply_text(f"Could not generate chart: {str(e)}")
 if __name__ == "__main__":
     threading.Thread(target=run_server, daemon=True).start()
